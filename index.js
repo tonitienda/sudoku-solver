@@ -9,13 +9,6 @@ const resolve = (filename) => {
     const board = parse(filename)
 
     printBoard(board)
-    cleanCandidates(board)
-
-    console.log()
-    console.log("---")
-    console.log()
-
-    printBoard(board)
 
     resolveNext(board)
 
@@ -30,39 +23,39 @@ const resolveNext = (board, row = 0, col = 0) => {
 
     cleanCandidates(board)
     if (isImpossible(board)) {
-            return
-    }
-
-    if (row === 9) {
-        console.log(`Solution found!(${solutions.length})`)
-        printBoard(board)
-    
-        solutions.push(board)
         return
     }
 
-    for (var i = row; i < 9; i++) {
-        for (var j = col; j < 9; j++) {
-            if (board[i][j].length > 1) {
-                for (var candidate of board[i][j]) {
-                    let board2 = cloneBoard(board)
-                    board2[i][j] = [candidate]
+    if (row === 9) {
+        solutions.push(board)
+        
+        console.log(`Solution found!(${solutions.length})`)
+        printBoard(board)
+        return
+    }
 
-                    if (col === 8) {
-                        resolveNext(board2, row + 1, 0)
-                    } else {
-                        resolveNext(board2, row, col + 1)
-                    }
-                }
+    const candidates = board[row][col]
+    
+    if (candidates.length > 1) {
+        for (var candidate of candidates) {
+            let board2 = cloneBoard(board)
+            board2[row][col] = [candidate]
+
+            if (col === 8) {
+                resolveNext(board2, row + 1, 0)
             } else {
-                if (col === 8) {
-                    resolveNext(board, row + 1, 0)
-                } else {
-                    resolveNext(board, row, col + 1)
-                }
+                resolveNext(board2, row, col + 1)
             }
         }
+    } else {
+        if (col === 8) {
+            resolveNext(board, row + 1, 0)
+        } else {
+            resolveNext(board, row, col + 1)
+        }
     }
+
+
 
 }
 
