@@ -1,25 +1,33 @@
 const fs = require('fs')
 const path = require('path')
 
-const parse = (filename) => fs.readFileSync(path.join(__dirname, filename)).toString().split('\r\n').map(l => l.split("").map(c => c === " " ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [Number(c)]))
+//const parse = (filename) => parseSudoku(fs.readFileSync(path.join(__dirname, filename)).toString().split('\r\n'))
 
-const solutions = []
 
-const resolve = (filename) => {
-    const board = parse(filename)
+const parseSudoku = lines => lines.map(l => l.split("").map(c => c === " " || c === "0" ? [1, 2, 3, 4, 5, 6, 7, 8, 9] : [Number(c)]))
 
-    printBoard(board)
+//const solutions = []
 
-    resolveNext(board)
+// const resolve = (filename) => {
+//     const start = new Date()
+//     const board = parse(filename)
 
-    console.log(`Solutions:`, solutions.length)
-}
+//     printBoard(board)
+
+//     resolveNext(board)
+
+//     console.log(`Solutions:`, solutions.length, ` found in ${new Date() - start}ms`)
+
+//     if (solutions.length > 0) {
+//         printBoard(solutions[solutions.length - 1])
+//     }
+// }
 
 const cloneBoard = (board) => {
     return board.map(l => l.map(c => c));
 }
 
-const resolveNext = (board, row = 0, col = 0) => {
+const resolveNext = (board, solutions, row = 0, col = 0) => {
 
     cleanCandidates(board)
     if (isImpossible(board)) {
@@ -28,30 +36,29 @@ const resolveNext = (board, row = 0, col = 0) => {
 
     if (row === 9) {
         solutions.push(board)
-        
+
         console.log(`Solution found!(${solutions.length})`)
-        printBoard(board)
         return
     }
 
     const candidates = board[row][col]
-    
+
     if (candidates.length > 1) {
         for (var candidate of candidates) {
             let board2 = cloneBoard(board)
             board2[row][col] = [candidate]
 
             if (col === 8) {
-                resolveNext(board2, row + 1, 0)
+                resolveNext(board2, solutions, row + 1, 0)
             } else {
-                resolveNext(board2, row, col + 1)
+                resolveNext(board2, solutions, row, col + 1)
             }
         }
     } else {
         if (col === 8) {
-            resolveNext(board, row + 1, 0)
+            resolveNext(board, solutions, row + 1, 0)
         } else {
-            resolveNext(board, row, col + 1)
+            resolveNext(board, solutions, row, col + 1)
         }
     }
 
@@ -120,4 +127,32 @@ const printBoard = (board) => {
     }
 }
 
-resolve('examples/1.txt')
+// resolve('examples/0.txt')
+
+
+main = () => {
+    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/easy.txt')).toString().split('\r\n')
+
+    const sudokusCount = sudokusLines.length / 10
+
+    for (var sudokuIndex = 0; sudokuIndex < sudokusCount; sudokuIndex++) {
+        const start = new Date()
+        const sudokuText = sudokusLines.slice(sudokuIndex * 10, sudokuIndex * 10 + 10)
+
+        const [title, ...data] = sudokuText
+        const board = parseSudoku(data)
+
+
+        const solutions = []
+        resolveNext(board, solutions)
+
+        console.log(`${title} took ${new Date() - start}ms`)
+        if (solutions.length > 0) {
+            printBoard(solutions[0])
+        }
+    }
+
+
+}
+
+main()
