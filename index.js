@@ -37,7 +37,7 @@ const resolveNext = (board, solutions, row = 0, col = 0) => {
     if (row === 9) {
         solutions.push(board)
 
-        console.log(`Solution found!(${solutions.length})`)
+        //console.log(`Solution found!(${solutions.length})`)
         return
     }
 
@@ -148,7 +148,7 @@ main = () => {
 
         console.log(`${title} took ${new Date() - start}ms`)
         if (solutions.length > 0) {
-            printBoard(solutions[0])
+            //printBoard(solutions[0])
         }
     }
 
