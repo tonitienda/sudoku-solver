@@ -29,24 +29,23 @@ const cloneBoard = (board) => {
 
 const resolveNext = (board, solutions, row = 0, col = 0) => {
 
-    const [stillViable, board2] = cleanCandidates(board)
-
-    //console.log([row, col], stillViable)
-    if (!stillViable) {
+    cleanCandidates(board)
+    if (isImpossible(board)) {
         return
     }
 
     if (row === 9) {
-        solutions.push(board2)
+        solutions.push(board)
 
         //console.log(`Solution found!(${solutions.length})`)
         return
     }
 
-    const candidates = board2[row][col]
+    const candidates = board[row][col]
 
     if (candidates.length > 1) {
         for (var candidate of candidates) {
+            let board2 = cloneBoard(board)
             board2[row][col] = [candidate]
 
             if (col === 8) {
@@ -57,9 +56,9 @@ const resolveNext = (board, solutions, row = 0, col = 0) => {
         }
     } else {
         if (col === 8) {
-            resolveNext(board2, solutions, row + 1, 0)
+            resolveNext(board, solutions, row + 1, 0)
         } else {
-            resolveNext(board2, solutions, row, col + 1)
+            resolveNext(board, solutions, row, col + 1)
         }
     }
 
@@ -77,60 +76,32 @@ const isImpossible = (board) => {
     }
 }
 
-const allCandidates = [1,2,3,4,5,6,7,8,9]
-
-
-
-
 const cleanCandidates = (board) => {
-    // const board2 = cloneBoard(board)
-
-    const board2 = []
-    
     for (var row = 0; row < 9; row++) {
         for (var column = 0; column < 9; column++) {
-            const forbiddenNumbersRow = board[row].filter(r => r.length === 1).flatMap(n => n)
-            const forbiddenNumbersRow = board[row].filter(r => r.length === 1).flatMap(n => n)
-            const candidates = board[row][column]
-            
-
-            if (candidates.length === 1) {
-                if(!(cleanRow(row, column, board2) &&
-                cleanColumn(row, column, board2) &&
-                cleanArea(row, column, board2))) {
-                    return [false, []]
-                }
+            if (board[row][column].length === 1) {
+                cleanRow(row, column, board)
+                cleanColumn(row, column, board)
+                cleanArea(row, column, board)
             }
         }
     }
-
-    return [true, board2]
 }
 
 const cleanRow = (row, column, board) => {
     for (var i = 0; i < 9; i++) {
         if (i != column) {
             board[row][i] = board[row][i].filter(n => n != board[row][column])
-            if(board[row][i].length === 0) {
-                return false
-            }
         }
     }
-
-    return true
 }
 
 const cleanColumn = (row, column, board) => {
     for (var i = 0; i < 9; i++) {
         if (i != row) {
             board[i][column] = board[i][column].filter(n => n != board[row][column])
-            if(board[i][column].length === 0) {
-                return false
-            }
         }
     }
-
-    return true
 }
 
 const cleanArea = (row, column, board) => {
@@ -141,14 +112,9 @@ const cleanArea = (row, column, board) => {
         for (var j = startCol; j < startCol + 3; j++) {
             if ((i !== row) && (j !== column)) {
                 board[i][j] = board[i][j].filter(n => n != board[row][column])
-                if(board[i][j].length === 0) {
-                    return false
-                }
             }
         }
     }
-
-    return true
 }
 
 
@@ -165,8 +131,7 @@ const printBoard = (board) => {
 
 
 main = () => {
-    // const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/hard.txt')).toString().split('\r\n')
-   const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/easy.txt')).toString().split('\r\n')
+    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/easy.txt')).toString().split('\r\n')
 
     const sudokusCount = sudokusLines.length / 10
 
@@ -176,7 +141,7 @@ main = () => {
 
         const [title, ...data] = sudokuText
         const board = parseSudoku(data)
-        process.stdout.write(`${title} ...`)
+
 
         const solutions = []
         resolveNext(board, solutions)

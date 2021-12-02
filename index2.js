@@ -3,20 +3,34 @@ const path = require('path')
 
 const solutions = []
 
-const nToCandidate = n => n === 0 ? ALL_CANDIDATES : 2^n
-const candidateHasN = (n, flags) => flags && n^2 === n^2
-const removeFromCandidate = (n, flags) => candidateHasN(n, flags) ? flags-n^2 : flags
-
 // Use bitwise operators to handle the candidates
 const ALL_CANDIDATES = 2 + 4 + 8 + 16 + 32 + 64 + 128 + 256 + 512
 
-const makeCandidates = board => board.map(l => l.map(nToCandidate))
-const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
+const nToCandidate = n => n === 0 ? ALL_CANDIDATES : Math.pow(2,n)
 
-    console.log(`Clean candidates`)
-    console.log(n, updatedRow, updatedCol)
-    console.log(`Candidates before`)
-    printBoard(candidates)
+// TODO - memoize
+const getCandidatesCache = {}
+const getCandidates = (n) => {
+    if(!getCandidatesCache[n]) {
+        getCandidatesCache[n] = [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(c => candidateHasN(c, n))
+    }
+    return getCandidatesCache[n]
+}
+
+const candidateHasN = (n, flags) => (flags & Math.pow(2,n)) === Math.pow(2,n)
+const removeFromCandidate = (n, flags) => candidateHasN(n, flags) ? flags - Math.pow(2,n) : flags
+
+
+const makeCandidates = board => board.map(l => l.map(nToCandidate))
+const fromCandidateToBoard = candidates => candidates.map(c => c.map(c => Math.round(Math.log(c)/Math.log(2))))
+
+let cleanCandidatesTime = 0
+const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
+    const start = new Date()
+    // console.log(`Clean candidates`)
+    //console.log(n, updatedRow, updatedCol)
+    // console.log(`Candidates before`)
+    // printBoard(candidates)
 
 
     // Clean row
@@ -29,7 +43,7 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
     // Clean column
     for (var row = 0; row < 9; row++) {
         if (row != updatedRow) {
-            candidates[updatedRow][col] = removeFromCandidate(n, candidates[row][updatedCol])
+            candidates[row][updatedCol] = removeFromCandidate(n, candidates[row][updatedCol])
         }
     }
 
@@ -45,8 +59,10 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
         }
     }
 
-    console.log(`Candidates after`)
-    printBoard(candidates)
+   // console.log(`Candidates after`)
+   // printBoard(candidates)
+
+   cleanCandidatesTime+= new Date() - start
 
 }
 
@@ -62,71 +78,80 @@ const printBoard = (board) => {
 const solve = (board) => {
     const candidates = makeCandidates(board)
 
-    console.log(`Candidates`)
-    printBoard(candidates)
+    // console.log(`Candidates`)
+   //  printBoard(candidates)
 
-    return solveNext(board, candidates, 0, 0);
+    solveNext(board, candidates, 0, 0);
 }
-
+let getNextCellToSolveTime = 0
 const getNextCellToSolve = (board, startRow, startCol) => {
+    const start = new Date()
+
     for (let i = 0; i < 9; i++) {
         for (let j = 0; j < 9; j++) {
             if (board[i][j] === 0) {
+                getNextCellToSolveTime += new Date() - start
                 return [i, j]
             }
         }
     }
 
+    getNextCellToSolveTime += new Date() - start
     return [-1, -1]
 }
 
 const solveNext = (board, candidates, row, col) => {
-    console.log('Board')
-    printBoard(board)
-    console.log('Candidates')
-    printBoard(candidates)
-    console.log(row, col)
+   // console.log('Board')
+   // printBoard(board)
+  //  console.log('Candidates')
+  //  printBoard(candidates)
+  //  console.log(row, col)
+   
     const nextCell = getNextCellToSolve(board, row, col);
-    console.log(nextCell)
+    //console.log(nextCell)
 
     if (nextCell[0] === -1) {
-        console.log(`Solution found`)
-        solutions.push(candidates)
+        //console.log(`Solution found`)
+        solutions.push(fromCandidateToBoard(candidates))
         return
     }
 
     const [r, c] = nextCell
     // Iterate through candidates for that cell
     const cellCandidates = getCandidates(candidates[r][c])
-    //console.log(candidates[row][col], '=>', cellCandidates)
+   // console.log(candidates[r][c], '=>', cellCandidates)
 
     for (let candidate of cellCandidates) {
         const candidates2 = cloneCandidates(candidates);
         const board2 = cloneCandidates(board);
 
-        candidates2[r][c] = 2^candidate
+        candidates2[r][c] = Math.pow(2, candidate)
         board2[r][c] = candidate
 
         cleanCandidates(candidates2, candidate, r, c)
         
+
         if (candidates2.some(l => l.some(c => c <= 0))) {
             continue
         }
+
         solveNext(board2, candidates2, r, c)
 
     }
 
 }
 
-// TODO - memoize
-const getCandidates = (n) => {
-    return [1, 2, 3, 4, 5, 6, 7, 8, 9].filter(c => n & 2 ^ c === c)
-}
-const cloneCandidates = candidates => candidates.map(l => l.map(c => c))
+let cloneCandidatesTime = 0
+const cloneCandidates = candidates => {
 
+    const start = new Date()
+    const candidates2 = candidates.map(l => l.map(c => c))
+    cloneCandidatesTime += new Date() - start
+    return candidates2
+}
 
 main = () => {
-    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/1.txt')).toString().split('\r\n')
+    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/easy.txt')).toString().split('\r\n')
     const sudokusCount = sudokusLines.length / 10
 
     const sudokus = []
@@ -142,22 +167,33 @@ main = () => {
     }
 
     sudokus.forEach(s => {
+        const start = new Date()
+      
         solutions.length = 0
-
-        console.log(s.title)
-        printBoard(s.board)
+        getNextCellToSolveTime=0
+        cleanCandidatesTime=0
+        cloneCandidatesTime = 0
+        //console.log(s.title)
+       // printBoard(s.board)
 
         solve(s.board);
+        console.log(`${s.title} took ${new Date() - start}ms (getNextCellToSolveTime: ${getNextCellToSolveTime}, cleanCandidatesTime: ${cleanCandidatesTime}, cloneCandidatesTime: ${cloneCandidatesTime})`)
 
-        console.log("Solution")
+        // console.log("Solution")
 
-        if (solutions.length > 0) {
-            printBoard(solutions[0])
-        }
-        else {
-            console.log(`No solutions found`)
-        }
+        // if (solutions.length > 0) {
+        //     printBoard(solutions[0])
+        // }
+        // else {
+        //     console.log(`No solutions found`)
+        // }
     })
 }
 
-main()
+  main()
+
+//  console.log(removeFromCandidate(4, 2))
+//  console.log(candidateHasN (4, 2))
+//  console.log((2 & Math.pow(2,4)))
+ 
+ // console.log( (flags && Math.pow(2,n)) === Math.pow(2,n))
