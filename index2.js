@@ -37,6 +37,10 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
     for (var col = 0; col < 9; col++) {
         if (col != updatedCol) {
             candidates[updatedRow][col] = removeFromCandidate(n, candidates[updatedRow][col])
+
+                if(candidates[updatedRow][col] === 0) {
+                    return false
+                }
         }
     }
 
@@ -44,6 +48,10 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
     for (var row = 0; row < 9; row++) {
         if (row != updatedRow) {
             candidates[row][updatedCol] = removeFromCandidate(n, candidates[row][updatedCol])
+
+            if(candidates[row][updatedCol] === 0) {
+                return false
+            }
         }
     }
 
@@ -55,6 +63,10 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
         for (var j = startCol; j < startCol + 3; j++) {
             if ((i !== updatedRow) && (j !== updatedCol)) {
                 candidates[i][j] = removeFromCandidate(n, candidates[i][j])
+
+                if(candidates[i][j] === 0) {
+                    return false
+                }
             }
         }
     }
@@ -63,6 +75,8 @@ const cleanCandidates = (candidates, n, updatedRow, updatedCol) => {
    // printBoard(candidates)
 
    cleanCandidatesTime+= new Date() - start
+
+   return true
 
 }
 
@@ -121,23 +135,27 @@ const solveNext = (board, candidates, row, col) => {
     const cellCandidates = getCandidates(candidates[r][c])
    // console.log(candidates[r][c], '=>', cellCandidates)
 
-    for (let candidate of cellCandidates) {
+   for(let i = 0; i< cellCandidates.length; i++) {
+       const candidate = cellCandidates[i]
         const candidates2 = cloneCandidates(candidates);
         const board2 = cloneCandidates(board);
 
         candidates2[r][c] = Math.pow(2, candidate)
         board2[r][c] = candidate
 
-        cleanCandidates(candidates2, candidate, r, c)
-        
+        const isValid = cleanCandidates(candidates2, candidate, r, c)
 
-        if (candidates2.some(l => l.some(c => c <= 0))) {
+        if (!isValid) {
+            // If the last candidate does not work, we restore the board
+            // if(i === cellCandidates.length-1) {
+            //     board[r][c] = 0
+            // }
             continue
         }
 
         solveNext(board2, candidates2, r, c)
-
     }
+
 
 }
 
