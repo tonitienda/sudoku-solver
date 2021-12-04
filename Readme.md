@@ -58,3 +58,30 @@ Grid 48 took 115ms
 Grid 49 took 186ms
 Grid 50 took 76ms
 ```
+
+## Hard mode results
+
+### 7:45
+
+```
+Grid 1 took 858ms
+Grid 2 took 1486ms
+Grid 3 took 506ms
+Grid 4 took 2226ms
+Grid 5 took 4875ms
+Grid 6 took 15398ms
+Grid 7 took 84561ms
+Grid 8 took 2575ms
+```
+
+### 7:52
+
+```
+Grid 1 took 859ms
+Grid 2 took 1479ms
+Grid 3 took 496ms
+Grid 4 took 2218ms
+Grid 5 took 4934ms
+Grid 6 took 15982ms
+Grid 7 took 85794ms
+```

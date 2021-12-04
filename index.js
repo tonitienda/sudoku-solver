@@ -28,16 +28,21 @@ const cloneBoard = (board) => {
 }
 
 const findNextCell = (board) => {
-    let currentCell = [-1,-1]
+    let currentCell = [-1, -1]
     let minCandidates = Infinity
 
-    for(var i = 0; i < 9; i++) {
-        for(var j = 0; j < 9 ; j++) {
+    for (var i = 0; i < 9; i++) {
+        for (var j = 0; j < 9; j++) {
             const candidates = board[i][j]
-            const count = candidates.length    
-            if(count < minCandidates && count > 1) {
-                minCandidates = count 
-                currentCell = [i,j]
+            const count = candidates.length
+
+            // Minimum number of candidates with multiple choices
+            if (count === 2) {
+                return [i, j]
+            }
+            if (count < minCandidates && count > 1) {
+                minCandidates = count
+                currentCell = [i, j]
             }
         }
     }
@@ -47,18 +52,33 @@ const findNextCell = (board) => {
 
 const resolveNext = (board, solutions) => {
 
-    cleanCandidates(board)
-    if (isImpossible(board)) {
+    // cleanCandidates(board)
+    // if (isImpossible(board)) {
+    //     return
+    // }
+
+    // if (isComplete(board)) {
+    //     solutions.push(board)
+    //     return
+    // }
+
+    // const [row, col] = findNextCell(board)
+
+
+    const { isImpossible, isComplete, nextCell } = cleanCandidates(board)
+    if (isImpossible) {
         return
     }
-
-    if (isComplete(board)) {
+    if (isComplete) {
         solutions.push(board)
         return
     }
 
-    const [row, col] = findNextCell(board)
+    const [row, col] = nextCell
     const candidates = board[row][col]
+
+    // console.log({ nextCell, candidates })
+    // return
 
     if (candidates.length > 1) {
         for (var candidate of candidates) {
@@ -107,7 +127,7 @@ const isComplete = (board) => {
     return true
 }
 
-const cleanCandidates = (board) => {
+const cleanCandidates2 = (board) => {
     for (var row = 0; row < 9; row++) {
         for (var column = 0; column < 9; column++) {
             if (board[row][column].length === 1) {
@@ -116,6 +136,81 @@ const cleanCandidates = (board) => {
                 cleanArea(row, column, board)
             }
         }
+    }
+}
+
+const cleanCandidates = (board) => {
+    let minCandidates = Infinity
+    let nextCell = null
+
+    for (var row = 0; row < 9; row++) {
+        for (var column = 0; column < 9; column++) {
+
+            if (board[row][column].length === 1) {
+                let number = board[row][column]
+
+                for (var i = 0; i < 9; i++) {
+                    if (i != column) {
+                        board[row][i] = board[row][i].filter(n => n != number)
+
+                        let candidateCount = board[row][i].length
+                        if (candidateCount === 0) {
+                            return { isImpossible: true }
+                        }
+
+                        if (candidateCount < minCandidates && candidateCount > 1) {
+                            minCandidates = candidateCount
+                            nextCell = [row, i]
+                        }
+                    }
+                }
+                for (var i = 0; i < 9; i++) {
+                    if (i != row) {
+                        board[i][column] = board[i][column].filter(n => n != number)
+
+                        let candidateCount = board[i][column].length
+                        if (candidateCount === 0) {
+                            return { isImpossible: true }
+                        }
+
+                        if (candidateCount < minCandidates && candidateCount > 1) {
+                            minCandidates = candidateCount
+                            nextCell = [i, column]
+                        }
+                    }
+                }
+                const startCol = Math.floor(column / 3) * 3
+                const startRow = Math.floor(row / 3) * 3
+
+                for (var i = startRow; i < startRow + 3; i++) {
+                    for (var j = startCol; j < startCol + 3; j++) {
+                        if ((i !== row) && (j !== column)) {
+                            board[i][j] = board[i][j].filter(n => n != number)
+
+
+                            let candidateCount = board[i][j].length
+                            if (candidateCount === 0) {
+                                return { isImpossible: true }
+                            }
+
+                            if (candidateCount < minCandidates && candidateCount > 1) {
+                                minCandidates = candidateCount
+                                nextCell = [i, j]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return {
+        //isImpossible: isImpossible(board),
+        isImpossible: false,
+        isComplete: isComplete(board),
+        // isComplete,
+        //nextCell: findNextCell(board)
+        nextCell
     }
 }
 
