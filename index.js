@@ -27,20 +27,37 @@ const cloneBoard = (board) => {
     return board.map(l => l.map(c => c));
 }
 
-const resolveNext = (board, solutions, row = 0, col = 0) => {
+const findNextCell = (board) => {
+    let currentCell = [-1,-1]
+    let minCandidates = Infinity
+
+    for(var i = 0; i < 9; i++) {
+        for(var j = 0; j < 9 ; j++) {
+            const candidates = board[i][j]
+            const count = candidates.length    
+            if(count < minCandidates && count > 1) {
+                minCandidates = count 
+                currentCell = [i,j]
+            }
+        }
+    }
+
+    return currentCell
+}
+
+const resolveNext = (board, solutions) => {
 
     cleanCandidates(board)
     if (isImpossible(board)) {
         return
     }
 
-    if (row === 9) {
+    if (isComplete(board)) {
         solutions.push(board)
-
-        //console.log(`Solution found!(${solutions.length})`)
         return
     }
 
+    const [row, col] = findNextCell(board)
     const candidates = board[row][col]
 
     if (candidates.length > 1) {
@@ -74,6 +91,20 @@ const isImpossible = (board) => {
             }
         }
     }
+
+    return false
+}
+
+const isComplete = (board) => {
+    for (var row = 0; row < 9; row++) {
+        for (var column = 0; column < 9; column++) {
+            if (board[row][column].length > 1) {
+                return false
+            }
+        }
+    }
+
+    return true
 }
 
 const cleanCandidates = (board) => {
@@ -131,7 +162,7 @@ const printBoard = (board) => {
 
 
 main = () => {
-    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/easy.txt')).toString().split('\r\n')
+    const sudokusLines = fs.readFileSync(path.join(__dirname, 'examples/hard.txt')).toString().split('\r\n')
 
     const sudokusCount = sudokusLines.length / 10
 
@@ -147,9 +178,9 @@ main = () => {
         resolveNext(board, solutions)
 
         console.log(`${title} took ${new Date() - start}ms`)
-        if (solutions.length > 0) {
-            //printBoard(solutions[0])
-        }
+        // if (solutions.length > 0) {
+        //     printBoard(solutions[0])
+        // }
     }
 
 
